@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2009-2015 Glen Berseth, Mubbasir Kapadia, Shawn Singh, Petros Faloutsos, Glenn Reinman, Rahul Shome
 // See license.txt for complete license.
 //
@@ -98,6 +98,9 @@ namespace SteerLib
 			bool computePath(std::vector<Util::Point>& agent_path, Util::Point start, Util::Point goal, SteerLib::SpatialDataBaseInterface * _gSpatialDatabase, bool append_to_path = false);
 		private:
 			SteerLib::SpatialDataBaseInterface * gSpatialDatabase;
+			double calcH_by_Euclidian(unsigned int x_n, unsigned int z_n, unsigned int x_g, unsigned int z_g);
+			double calcH_by_Manhattan(unsigned int x_n, unsigned int z_n, unsigned int x_g, unsigned int z_g);
+			bool comp(AStarPlannerNode i, AStarPlannerNode j);
 	};
 
 
