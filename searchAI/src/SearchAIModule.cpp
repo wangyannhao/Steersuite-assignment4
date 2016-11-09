@@ -141,9 +141,8 @@ void SearchAIModule::preprocessSimulation()
 	std::vector<SteerLib::AgentInterface*> _agents = gEngine->getAgents();
 	for (int i =0; i<_agents.size(); ++i)
 	{
-		std::cout<<"\nAgent :: "<<i<<"/"<<_agents.size()-1;
 		((SearchAgent*)_agents[i])->computePlan();
-		
+		std::cout<<"\nAgent :: "<<i<<"/"<<_agents.size()-1<<std::endl;
 	}
 }
 

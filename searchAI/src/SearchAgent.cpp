@@ -85,16 +85,18 @@ void SearchAgent::reset(const SteerLib::AgentInitialConditions & initialConditio
 	assert(_forward.length()!=0.0f);
 	assert(_goalQueue.size() != 0);
 	assert(_radius != 0.0f);
+	computePlan();
+
 }
 
 
 void SearchAgent::computePlan()
 {
-	std::cout<<"\nComputing agent plan "<<std::endl;
-	bool ha = astar.computePath(__path, __position, _goalQueue.front().targetLocation, gSpatialDatabase);
-	/*if (!_goalQueue.empty())
+	std::cout<<"\nComputing agent plan ";
+	if (!_goalQueue.empty())
 	{
 		Util::Point global_goal = _goalQueue.front().targetLocation;
+		//std::cout << "goalQueue is not empty" << std::endl;
 		if (astar.computePath(__path, __position, _goalQueue.front().targetLocation, gSpatialDatabase))
 		{
 
@@ -110,37 +112,35 @@ void SearchAgent::computePlan()
 			SteerLib::AgentGoalInfo goal_path_pt;
 			goal_path_pt.targetLocation = global_goal;
 			_goalQueue.push(goal_path_pt);
-		}*/
+		}
 		// else
 		// {
 		// 	for(int i = 0;i<20;++i)
 		// 		_goalQueue.push(_goalQueue.front());
 		// }
-	//}
+	}
 
 
 }
-void SearchAgent::hehe() {
-	std::cout<< "hehe" << std::endl;
-}
+
 
 void SearchAgent::updateAI(float timeStamp, float dt, unsigned int frameNumber)
 {
 	Util::AutomaticFunctionProfiler profileThisFunction( &SearchAIGlobals::gPhaseProfilers->aiProfiler );
 
-	//std::cout << "heheh" << std::endl;
 	double steps = (DURATION/(double)__path.size());
+
 	if(timeStamp*dt > last_waypoint*steps)
 	{	
 		if(!_goalQueue.empty())
 		{
 			__position = _goalQueue.front().targetLocation;
-			std::cout<<"Waypoint: "<< __position;
+			std::cout<<"Waypoint: "<< __position<<std::endl;
 			_goalQueue.pop();
 			last_waypoint++;
 		}
 	}
-	//computePlan();
+	
 }
 
 
@@ -170,9 +170,11 @@ void SearchAgent::draw()
 	
 	if(__path.size()>0)
 	{
+		//std::cout << "path size > 0" << std::endl;
 		for(int i = 1; i<__path.size(); ++i)
 			Util::DrawLib::drawLine(__path[i-1], __path[i], Util::Color(1.0f, 0.0f, 0.0f), 2);
 		Util::DrawLib::drawCircle(__path[__path.size()-1], Util::Color(0.0f, 1.0f, 0.0f));
 	}
+	
 #endif
 }
