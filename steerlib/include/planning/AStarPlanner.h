@@ -33,6 +33,7 @@ namespace SteerLib
 			double f;
 			double g;
 			Util::Point point;
+			AStarPlannerNode();
 			AStarPlannerNode* parent;
 			AStarPlannerNode(Util::Point _point, double _g, double _f, AStarPlannerNode* _parent)
 			{
@@ -41,6 +42,7 @@ namespace SteerLib
 				g = _g;
 				parent = _parent;
 			}
+
 			bool operator<(AStarPlannerNode other) const
 		    {
 		        return this->f < other.f;

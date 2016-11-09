@@ -28,7 +28,7 @@ namespace SteerLib
 	AStarPlanner::AStarPlanner() {}
 
 	AStarPlanner::~AStarPlanner() {}
-
+	
 	bool AStarPlanner::canBeTraversed(int id)
 	{
 		double traversal_cost = 0;
@@ -73,7 +73,7 @@ namespace SteerLib
 	bool AStarPlanner::computePath(std::vector<Util::Point>& agent_path, Util::Point start, Util::Point goal, SteerLib::SpatialDataBaseInterface * _gSpatialDatabase, bool append_to_path)
 	{
 		gSpatialDatabase = _gSpatialDatabase;
-
+		std::cout << "hehehe" << std::endl;
 		//std::vector<Util::Point> temp_agent_path;
 		//Util::Point start, goal;
 		//start.x = start0.x + 0.5f;
@@ -350,11 +350,11 @@ namespace SteerLib
 				std::cout << " cant reach the target" << std::endl;
 				return false;
 			}
-			std::vector<AStarPlannerNode>::iterator min =  std::min_element(std::begin(open), std::end(open), comp);
+			//std::vector<AStarPlannerNode>::iterator min =  std::min_element(std::begin(open), std::end(open), comp);
 
 
-			iit = min - open.begin();
-			smallest_F = open[iit].f;
+			//iit = min - open.begin();
+			//smallest_F = open[iit].f;
 			loop++;
 		}
 
@@ -419,5 +419,8 @@ namespace SteerLib
 			else
 				return false;
 		}
+	}
+	AStarPlannerNode::AStarPlannerNode()
+	{
 	}
 }

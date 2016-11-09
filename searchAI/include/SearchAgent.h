@@ -65,6 +65,7 @@ public:
 	computePlan calls the A* function to compute the path and store in in the global __path variable.
 	*/
 	void computePlan();
+	void hehe();
 	SteerLib::AStarPlanner astar;
 
 protected:

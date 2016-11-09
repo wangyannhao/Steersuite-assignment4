@@ -143,6 +143,7 @@ void SearchAIModule::preprocessSimulation()
 	{
 		std::cout<<"\nAgent :: "<<i<<"/"<<_agents.size()-1;
 		((SearchAgent*)_agents[i])->computePlan();
+		
 	}
 }
 

@@ -90,8 +90,9 @@ void SearchAgent::reset(const SteerLib::AgentInitialConditions & initialConditio
 
 void SearchAgent::computePlan()
 {
-	std::cout<<"\nComputing agent plan ";
-	if (!_goalQueue.empty())
+	std::cout<<"\nComputing agent plan "<<std::endl;
+	bool ha = astar.computePath(__path, __position, _goalQueue.front().targetLocation, gSpatialDatabase);
+	/*if (!_goalQueue.empty())
 	{
 		Util::Point global_goal = _goalQueue.front().targetLocation;
 		if (astar.computePath(__path, __position, _goalQueue.front().targetLocation, gSpatialDatabase))
@@ -109,23 +110,25 @@ void SearchAgent::computePlan()
 			SteerLib::AgentGoalInfo goal_path_pt;
 			goal_path_pt.targetLocation = global_goal;
 			_goalQueue.push(goal_path_pt);
-		}
+		}*/
 		// else
 		// {
 		// 	for(int i = 0;i<20;++i)
 		// 		_goalQueue.push(_goalQueue.front());
 		// }
-	}
+	//}
 
 
 }
-
+void SearchAgent::hehe() {
+	std::cout<< "hehe" << std::endl;
+}
 
 void SearchAgent::updateAI(float timeStamp, float dt, unsigned int frameNumber)
 {
 	Util::AutomaticFunctionProfiler profileThisFunction( &SearchAIGlobals::gPhaseProfilers->aiProfiler );
 
-	
+	//std::cout << "heheh" << std::endl;
 	double steps = (DURATION/(double)__path.size());
 	if(timeStamp*dt > last_waypoint*steps)
 	{	
@@ -137,6 +140,7 @@ void SearchAgent::updateAI(float timeStamp, float dt, unsigned int frameNumber)
 			last_waypoint++;
 		}
 	}
+	//computePlan();
 }
 
 
