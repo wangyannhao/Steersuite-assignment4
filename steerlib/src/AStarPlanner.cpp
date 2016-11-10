@@ -88,32 +88,57 @@ namespace SteerLib
 		Util::Point startCenter = getPointFromGridIndex(startID);
 		Util::Point goalCenter = getPointFromGridIndex(goalID);
 		(*nodeMap[startID]).g = 0;
-		(*nodeMap[startID]).f = (*nodeMap[startID]).g + HEURISTIC_WEIGHT*heuristic(startID, goalID);
+		(*nodeMap[startID]).f = (*nodeMap[startID]).g + w*heuristic(startID, goalID);
+
+		(*nodeMap[startID]).g = INFINITE;
+		(*nodeMap[startID]).f = (*nodeMap[startID]).g;
 
 		std::set<int> closedSet;
 		std::set<int> openSet;
+		std::set<int> INCONS;
 		openSet.insert(startID);
+		expand(startID, goalID, openSet, closedSet, INCONS, nodeMap);
 
-		while (!openSet.empty()) {
-			//Find node in openset with smallest f value
-			int currentNode = getCurrentNode(openSet, nodeMap);
-
-			//Add to closedset, remove from openset
-			closedSet.insert(currentNode);
-			openSet.erase(openSet.find(currentNode));
-
-			//Check if we reached the goal
-			if (currentNode == goalID) {
-				return reconstruct_path(agent_path, currentNode, nodeMap);
-			}
-
-			//Search through neighbors, calculate g,f scores, add to openset
-			expand(currentNode, goalID, openSet, closedSet, nodeMap);
+		if (w < (*nodeMap[(goalID)]).g / getCurrentNode(and (openSet, INCONS), nodeMap)) {
+			_w = w;
 		}
+		else {
+			_w = (*nodeMap[(goalID)]).g / getCurrentNode(and (openSet, INCONS), nodeMap);
+		}
+		while (_w > 1) {
+			//decrease w;
+			w = w*0.8;
 
+			openSet = and(openSet, INCONS);
+			int currentNode;
+			while ((*nodeMap[(goalID)]).g > getCurrentNode(openSet, nodeMap)) {
+				//Find node in openset with smallest f value
+				currentNode = getCurrentNode(openSet, nodeMap);
 
+				//Add to closedset, remove from openset
+				closedSet.insert(currentNode);
+				openSet.erase(openSet.find(currentNode));
+
+				//Check if we reached the goal
+				//if (currentNode == goalID) {
+				//	return reconstruct_path(agent_path, currentNode, nodeMap);
+				//}
+
+				//Search through neighbors, calculate g,f scores, add to openset
+				expand(currentNode, goalID, openSet, closedSet, INCONS, nodeMap);
+			}
+			if (w < (*nodeMap[(goalID)]).g / getCurrentNode(and (openSet, INCONS), nodeMap)) {
+				_w = w;
+			}
+			else {
+				_w = (*nodeMap[(goalID)]).g / getCurrentNode(and (openSet, INCONS), nodeMap);
+			}
+			reconstruct_path(agent_path, currentNode, nodeMap);
+		}
+		if (_w <= 1 && agent_path.size()!=0) {
+			return true;
+		}
 		//std::cout<<"\nIn A*";
-
 		return false;
 	}
 
@@ -167,13 +192,23 @@ namespace SteerLib
 		return (*it);
 	}
 
-	void AStarPlanner::expand(int currentNode, int goalIndex, std::set<int>& openset, std::set<int> closedset, std::map<int, AStarPlannerNode*>& nodeMap) {
+	std::set<int> AStarPlanner::and (std::set<int> a, std::set<int>b) {
+		for (int i = 0; i < b.size(); i++)
+		{
+			int tmp = b.end();
+			a.insert(tmp);
+			b.erase(b.end());
+		}
+		
+	}
+
+	void AStarPlanner::expand(int currentNode, int goalIndex, std::set<int>& openset, std::set<int> closedset,std::set<int> INCONS, std::map<int, AStarPlannerNode*>& nodeMap) {
 		unsigned int x, z;
 		gSpatialDatabase->getGridCoordinatesFromIndex(currentNode, x, z);
 		for (int i = MAX(x - 1, 0); i<MIN(x + 2, gSpatialDatabase->getNumCellsX()); i += GRID_STEP) {
 			for (int j = MAX(z - 1, 0); j<MIN(z + 2, gSpatialDatabase->getNumCellsZ()); j += GRID_STEP) {
 				int neighbor = gSpatialDatabase->getCellIndexFromGridCoords(i, j);
-				if (canBeTraversed(neighbor) && closedset.count(neighbor) == 0) {
+				if (canBeTraversed(neighbor) ) {
 					double tempg;
 					if ((i == x) || (j == z)) {
 						tempg = (*nodeMap[currentNode]).g + (DIAGONAL_COST*gSpatialDatabase->getTraversalCost(neighbor));
@@ -184,13 +219,22 @@ namespace SteerLib
 					if (tempg < (*nodeMap[neighbor]).g) {
 						(*nodeMap[neighbor]).g = tempg;
 						(*nodeMap[neighbor]).f = (*nodeMap[neighbor]).g + HEURISTIC_WEIGHT*heuristic(neighbor, goalIndex);
+						//if neighbor is in the openset
 						if (openset.count(neighbor) == 1) {
 							openset.erase(openset.find(neighbor));
 						}
-						openset.insert(neighbor);
-						(*nodeMap[neighbor]).parent = nodeMap[currentNode];
+						//if neighbor is not in the closedset
+						if (closedset.count(neighbor) == 0) {
+							openset.insert(neighbor);
+							(*nodeMap[neighbor]).parent = nodeMap[currentNode];
+						}
+						//neighbor is in the closeset
+						else {
+							INCONS.insert(neighbor);
+						}
 					}
 				}
+				
 			}
 		}
 	}
