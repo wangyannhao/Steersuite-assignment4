@@ -74,7 +74,7 @@ namespace SteerLib
 	bool AStarPlanner::computePath(std::vector<Util::Point>& agent_path, Util::Point start, Util::Point goal, SteerLib::SpatialDataBaseInterface  * _gSpatialDatabase, bool append_to_path)
 	{
 		gSpatialDatabase = _gSpatialDatabase;
-
+		w = 4;
 		//Initialize f and g map scores
 		std::map<int, AStarPlannerNode*> nodeMap;
 		for (int i = 0; i < gSpatialDatabase->getNumCellsX(); ++i) {
@@ -99,17 +99,17 @@ namespace SteerLib
 		openSet.insert(startID);
 		expand(startID, goalID, openSet, closedSet, INCONS, nodeMap);
 
-		if (w < (*nodeMap[(goalID)]).g / getCurrentNode(and (openSet, INCONS), nodeMap)) {
+		if (w < (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap)) {
 			_w = w;
 		}
 		else {
-			_w = (*nodeMap[(goalID)]).g / getCurrentNode(and (openSet, INCONS), nodeMap);
+			_w = (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap);
 		}
 		while (_w > 1) {
 			//decrease w;
 			w = w*0.8;
 
-			openSet = and(openSet, INCONS);
+			and(openSet, INCONS);
 			int currentNode;
 			while ((*nodeMap[(goalID)]).g > getCurrentNode(openSet, nodeMap)) {
 				//Find node in openset with smallest f value
@@ -127,11 +127,11 @@ namespace SteerLib
 				//Search through neighbors, calculate g,f scores, add to openset
 				expand(currentNode, goalID, openSet, closedSet, INCONS, nodeMap);
 			}
-			if (w < (*nodeMap[(goalID)]).g / getCurrentNode(and (openSet, INCONS), nodeMap)) {
+			if (w < (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap)) {
 				_w = w;
 			}
 			else {
-				_w = (*nodeMap[(goalID)]).g / getCurrentNode(and (openSet, INCONS), nodeMap);
+				_w = (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap);
 			}
 			reconstruct_path(agent_path, currentNode, nodeMap);
 		}
@@ -191,14 +191,18 @@ namespace SteerLib
 		}
 		return (*it);
 	}
-
-	std::set<int> AStarPlanner::and (std::set<int> a, std::set<int>b) {
-		for (int i = 0; i < b.size(); i++)
-		{
-			int tmp = b.end();
-			a.insert(tmp);
-			b.erase(b.end());
+	int AStarPlanner::min_2set(std::set<int> openset, std::set<int> INCONS,std::map<int, AStarPlannerNode*> nodeMap) {
+		int a = getCurrentNode(openset, nodeMap);
+		int b = getCurrentNode(INCONS, nodeMap);
+		if ((*nodeMap[a]).g<(*nodeMap[b]).g) {
+			return a;
 		}
+		else {
+			return b;
+		}
+	}
+	void AStarPlanner::and (std::set<int> a, std::set<int>b) {
+		a.insert(b.begin(), b.end());
 		
 	}
 

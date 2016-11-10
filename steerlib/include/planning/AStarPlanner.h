@@ -100,7 +100,8 @@ namespace SteerLib
 		double heuristic(int startIndex, int endIndex);
 		double w;
 		double _w;
-		std::set<int> and (std::set<int>openSet, std::set<int>INCONS);
+		void and (std::set<int>openSet, std::set<int>INCONS);
+		int min_2set(std::set<int> openset, std::set<int> INCONS, std::map<int, AStarPlannerNode*> nodeMap);
 		bool reconstruct_path(std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap);
 		int getCurrentNode(std::set<int> openset, std::map<int, AStarPlannerNode*> nodeMap);
 		void expand(int currentNode, int goalIndex, std::set<int>& openset, std::set<int> closedset,std::set<int> INCONS, std::map<int, AStarPlannerNode*>& nodeMap);
