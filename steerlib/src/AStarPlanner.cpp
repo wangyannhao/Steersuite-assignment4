@@ -61,7 +61,6 @@ namespace SteerLib
 	}
 
 
-
 	Util::Point AStarPlanner::getPointFromGridIndex(int id)
 	{
 		Util::Point p;
@@ -70,13 +69,13 @@ namespace SteerLib
 	}
 
 
-
 	bool AStarPlanner::computePath(std::vector<Util::Point>& agent_path, Util::Point start, Util::Point goal, SteerLib::SpatialDataBaseInterface  * _gSpatialDatabase, bool append_to_path)
 	{
+		
 		gSpatialDatabase = _gSpatialDatabase;
 		w = 4;
 		//Initialize f and g map scores
-		std::map<int, AStarPlannerNode*> nodeMap;
+		
 		for (int i = 0; i < gSpatialDatabase->getNumCellsX(); ++i) {
 			for (int j = 0; j < gSpatialDatabase->getNumCellsZ(); ++j) {
 				int index = gSpatialDatabase->getCellIndexFromGridCoords(i, j);
@@ -89,50 +88,37 @@ namespace SteerLib
 		Util::Point goalCenter = getPointFromGridIndex(goalID);
 		(*nodeMap[startID]).g = 0;
 		(*nodeMap[startID]).f = (*nodeMap[startID]).g + w*heuristic(startID, goalID);
-
 		(*nodeMap[startID]).g = INFINITE;
 		(*nodeMap[startID]).f = (*nodeMap[startID]).g;
 
-		std::set<int> closedSet;
-		std::set<int> openSet;
-		std::set<int> INCONS;
-		openSet.insert(startID);
-		expand(startID, goalID, openSet, closedSet, INCONS, nodeMap);
 
+		openSet.insert(startID);
+		ImprovePath();
+		
 		if (w < (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap)) {
-			_w = w;
+			_w = w; 
 		}
 		else {
-			_w = (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap);
+			_w = (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap);	
 		}
+		reconstruct_path(agent_path, currentNode, nodeMap);
+
 		while (_w > 1) {
 			//decrease w;
 			w = w*0.8;
 
 			and(openSet, INCONS);
-			int currentNode;
-			while ((*nodeMap[(goalID)]).g > getCurrentNode(openSet, nodeMap)) {
-				//Find node in openset with smallest f value
-				currentNode = getCurrentNode(openSet, nodeMap);
+			closedSet.empty();
+			ImprovePath();
 
-				//Add to closedset, remove from openset
-				closedSet.insert(currentNode);
-				openSet.erase(openSet.find(currentNode));
-
-				//Check if we reached the goal
-				//if (currentNode == goalID) {
-				//	return reconstruct_path(agent_path, currentNode, nodeMap);
-				//}
-
-				//Search through neighbors, calculate g,f scores, add to openset
-				expand(currentNode, goalID, openSet, closedSet, INCONS, nodeMap);
-			}
 			if (w < (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap)) {
 				_w = w;
 			}
 			else {
 				_w = (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap);
 			}
+			
+
 			reconstruct_path(agent_path, currentNode, nodeMap);
 		}
 		if (_w <= 1 && agent_path.size()!=0) {
@@ -141,6 +127,7 @@ namespace SteerLib
 		//std::cout<<"\nIn A*";
 		return false;
 	}
+
 
 	double AStarPlanner::heuristic(int startIndex, int endIndex) {
 		//If method is true, use Euclidean, else use Manhattan
@@ -156,6 +143,30 @@ namespace SteerLib
 		}
 	}
 
+	void AStarPlanner::ImprovePath() {
+		std::cout << "ImprovePath called" << std::endl;
+		std::cout << goalID << std::endl;
+		while ((*nodeMap[(goalID)]).g > (*nodeMap[getCurrentNode(openSet, nodeMap)]).g) {
+			std::cout << "ImprovePath while called" << std::endl;
+			//Find node in openset with smallest f value
+			currentNode = getCurrentNode(openSet, nodeMap);
+			std::cout << currentNode << std::endl;
+			//Add to closedset, remove from openset
+			closedSet.insert(currentNode);
+			openSet.erase(openSet.find(currentNode));
+
+			//Check if we reached the goal
+			//if (currentNode == goalID) {
+			//	return reconstruct_path(agent_path, currentNode, nodeMap);
+			//}
+
+			//Search through neighbors, calculate g,f scores, add to openset
+			expand(currentNode, goalID, openSet, closedSet, INCONS, nodeMap);
+		}
+		std::cout << "while ended" << std::endl;
+	}
+
+
 	bool AStarPlanner::reconstruct_path(std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap) {
 		AStarPlannerNode* temp = nodeMap[currentNode];
 		while ((*temp).parent) {
@@ -166,45 +177,53 @@ namespace SteerLib
 		return true;
 	}
 
+
 	int AStarPlanner::getCurrentNode(std::set<int> openset, std::map<int, AStarPlannerNode*> nodeMap) {
 		std::set<int>::iterator it;
 		double temp = INFINITY;
 		//If bigger is true, larger g scores have precedence, else smaller scores have precedence
 		bool bigger = true;
-		for (std::set<int>::iterator i = openset.begin(); i != openset.end(); ++i) {
-			if ((*nodeMap[(*i)]).f < temp) {
-				temp = (*nodeMap[(*i)]).f;
-				it = i;
-			}
-			else if ((*nodeMap[(*i)]).f == temp) {
-				if (bigger) {
-					if ((*nodeMap[(*it)]).g < (*nodeMap[(*i)]).g) {
-						it = i;
-					}
+		if (openset.size() != 0) {
+			for (std::set<int>::iterator i = openset.begin(); i != openset.end(); ++i) {
+				if ((*nodeMap[(*i)]).f < temp) {
+					temp = (*nodeMap[(*i)]).f;
+					it = i;
 				}
-				else {
-					if ((*nodeMap[(*it)]).g >(*nodeMap[(*i)]).g) {
-						it = i;
+				else if ((*nodeMap[(*i)]).f == temp) {
+					if (bigger) {
+						if ((*nodeMap[(*it)]).g < (*nodeMap[(*i)]).g) {
+							it = i;
+						}
+					}
+					else {
+						if ((*nodeMap[(*it)]).g > (*nodeMap[(*i)]).g) {
+							it = i;
+						}
 					}
 				}
 			}
 		}
 		return (*it);
 	}
+
+
 	int AStarPlanner::min_2set(std::set<int> openset, std::set<int> INCONS,std::map<int, AStarPlannerNode*> nodeMap) {
+		std::cout << "min_2set called" << std::endl;
 		int a = getCurrentNode(openset, nodeMap);
 		int b = getCurrentNode(INCONS, nodeMap);
-		if ((*nodeMap[a]).g<(*nodeMap[b]).g) {
+		if ((*nodeMap[a]).f<(*nodeMap[b]).f) {
 			return a;
 		}
 		else {
 			return b;
 		}
 	}
+
+
 	void AStarPlanner::and (std::set<int> a, std::set<int>b) {
 		a.insert(b.begin(), b.end());
-		
 	}
+
 
 	void AStarPlanner::expand(int currentNode, int goalIndex, std::set<int>& openset, std::set<int> closedset,std::set<int> INCONS, std::map<int, AStarPlannerNode*>& nodeMap) {
 		unsigned int x, z;

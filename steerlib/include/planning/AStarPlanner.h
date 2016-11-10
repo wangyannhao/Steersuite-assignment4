@@ -90,16 +90,26 @@ namespace SteerLib
 		agent_path : The solution path that is populated by the A* search
 		start : The start point
 		goal : The goal point
-		_gSpatialDatabase : The pointer to the GridDatabase2D from the agent
+		_gSpatialDatabase : The pointer to the SpatialDataBaseInterface from the agent
 		append_to_path : An optional argument to append to agent_path instead of overwriting it.
+		and: combine 2 sets, insert b to a
 		*/
 
 		bool computePath(std::vector<Util::Point>& agent_path, Util::Point start, Util::Point goal, SteerLib::SpatialDataBaseInterface* _gSpatialDatabase, bool append_to_path = false);
+	
 	private:
 		SteerLib::SpatialDataBaseInterface * gSpatialDatabase;
 		double heuristic(int startIndex, int endIndex);
 		double w;
 		double _w;
+		std::map<int, AStarPlannerNode*> nodeMap;
+		int goalID;
+		int startID;
+		std::set<int> closedSet;
+		std::set<int> openSet;
+		std::set<int> INCONS;
+		int currentNode;
+		void ImprovePath();
 		void and (std::set<int>openSet, std::set<int>INCONS);
 		int min_2set(std::set<int> openset, std::set<int> INCONS, std::map<int, AStarPlannerNode*> nodeMap);
 		bool reconstruct_path(std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap);
