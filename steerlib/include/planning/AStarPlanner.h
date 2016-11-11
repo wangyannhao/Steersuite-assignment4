@@ -31,13 +31,15 @@ namespace SteerLib
 	public:
 		double f;
 		double g;
+		double h;
 		Util::Point point;
 		AStarPlannerNode* parent;
-		AStarPlannerNode(Util::Point _point, double _g, double _f, AStarPlannerNode* _parent)
+		AStarPlannerNode(Util::Point _point, double _g, double _f,double _h, AStarPlannerNode* _parent)
 		{
 			f = _f;
 			point = _point;
 			g = _g;
+			h = _h;
 			parent = _parent;
 		}
 		bool operator<(AStarPlannerNode other) const
@@ -100,11 +102,15 @@ namespace SteerLib
 		double heuristic(int startIndex, int endIndex);
 		std::set<int> closedSet;
 		std::set<int> openSet;
+		std::set<int> INCONS;
 		std::map<int, AStarPlannerNode*> nodeMap;
 		int startID;
 		int goalID;
+		double w ;
+		double _w;
 		bool reconstruct_path(std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap);
 		int getCurrentNode(std::set<int> openset, std::map<int, AStarPlannerNode*> nodeMap);
+		int mini(std::set<int> openset, std::map<int, AStarPlannerNode*> nodeMap);
 		void expand(int currentNode, int goalIndex, std::set<int>& openset, std::set<int> closedset, std::map<int, AStarPlannerNode*>& nodeMap);
 	};
 
