@@ -98,6 +98,11 @@ namespace SteerLib
 	private:
 		SteerLib::SpatialDataBaseInterface * gSpatialDatabase;
 		double heuristic(int startIndex, int endIndex);
+		std::set<int> closedSet;
+		std::set<int> openSet;
+		std::map<int, AStarPlannerNode*> nodeMap;
+		int startID;
+		int goalID;
 		bool reconstruct_path(std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap);
 		int getCurrentNode(std::set<int> openset, std::map<int, AStarPlannerNode*> nodeMap);
 		void expand(int currentNode, int goalIndex, std::set<int>& openset, std::set<int> closedset, std::map<int, AStarPlannerNode*>& nodeMap);

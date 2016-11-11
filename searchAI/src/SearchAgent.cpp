@@ -92,7 +92,7 @@ void SearchAgent::reset(const SteerLib::AgentInitialConditions & initialConditio
 
 void SearchAgent::computePlan()
 {
-	std::cout<<"\nComputing agent plan ";
+	std::cout<<"\nComputing agent plan "<<std::endl;
 	if (!_goalQueue.empty())
 	{
 		Util::Point global_goal = _goalQueue.front().targetLocation;

@@ -94,7 +94,7 @@ namespace SteerLib
 		std::set<int> openSet;
 		openSet.insert(startID);
 
-		while (!openSet.empty()) {
+		while ((*nodeMap[goalID]).f>(*nodeMap[getCurrentNode(openSet, nodeMap)]).f) {
 			//Find node in openset with smallest f value
 			int currentNode = getCurrentNode(openSet, nodeMap);
 
@@ -104,17 +104,20 @@ namespace SteerLib
 
 			//Check if we reached the goal
 			if (currentNode == goalID) {
+				std::cout << "found path" << std::endl;
+				std::cout << "this is interesting" << std::endl;
 				return reconstruct_path(agent_path, currentNode, nodeMap);
 			}
-
+			
 			//Search through neighbors, calculate g,f scores, add to openset
 			expand(currentNode, goalID, openSet, closedSet, nodeMap);
 		}
 
-
+		std::cout << (*nodeMap[goalID]).f<< std::endl;
+		std::cout << (*nodeMap[getCurrentNode(openSet, nodeMap)]).f << std::endl;
+		return reconstruct_path(agent_path, goalID, nodeMap);
 		//std::cout<<"\nIn A*";
 
-		return false;
 	}
 
 	double AStarPlanner::heuristic(int startIndex, int endIndex) {
@@ -133,6 +136,7 @@ namespace SteerLib
 
 	bool AStarPlanner::reconstruct_path(std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap) {
 		AStarPlannerNode* temp = nodeMap[currentNode];
+		std::cout << "reconstructing path" << std::endl;
 		while ((*temp).parent) {
 			temp = (*temp).parent;
 			agent_path.insert(agent_path.begin(), (*temp).point);
@@ -158,7 +162,7 @@ namespace SteerLib
 					}
 				}
 				else {
-					if ((*nodeMap[(*it)]).g >(*nodeMap[(*i)]).g) {
+					if ((*nodeMap[(*it)]).g > (*nodeMap[(*i)]).g) {
 						it = i;
 					}
 				}
@@ -170,8 +174,8 @@ namespace SteerLib
 	void AStarPlanner::expand(int currentNode, int goalIndex, std::set<int>& openset, std::set<int> closedset, std::map<int, AStarPlannerNode*>& nodeMap) {
 		unsigned int x, z;
 		gSpatialDatabase->getGridCoordinatesFromIndex(currentNode, x, z);
-		for (int i = MAX(x - 1, 0); i<MIN(x + 2, gSpatialDatabase->getNumCellsX()); i += GRID_STEP) {
-			for (int j = MAX(z - 1, 0); j<MIN(z + 2, gSpatialDatabase->getNumCellsZ()); j += GRID_STEP) {
+		for (int i = MAX(x - 1, 0); i < MIN(x + 2, gSpatialDatabase->getNumCellsX()); i += GRID_STEP) {
+			for (int j = MAX(z - 1, 0); j < MIN(z + 2, gSpatialDatabase->getNumCellsZ()); j += GRID_STEP) {
 				int neighbor = gSpatialDatabase->getCellIndexFromGridCoords(i, j);
 				if (canBeTraversed(neighbor) && closedset.count(neighbor) == 0) {
 					double tempg;
