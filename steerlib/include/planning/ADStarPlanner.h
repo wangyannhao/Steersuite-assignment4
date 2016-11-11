@@ -16,7 +16,39 @@
 
 namespace SteerLib
 {
+	struct keyValue
+	{
+		double k1;
+		double k2;
+	};
+	
+	struct nodeKey
+	{
+		int node;
+		keyValue key;
+	};
 
+	class BinaryHeap
+	{
+	private:
+		std::vector <nodeKey> heap;
+		int left(int parent);
+		int right(int parent);
+		int parent(int child);
+		void heapifyup(int index);
+		void heapifydown(int index);
+	public:
+		BinaryHeap()
+		{}
+		void Insert(nodeKey element);
+		void DeleteMin();
+		nodeKey ExtractMin();
+		int Size();
+		bool Find(int index);
+		void DeleteAny(int index);
+	};
+
+	bool compareKey(keyValue k1, keyValue k2);
 	/*
 	@function The AStarPlannerNode class gives a suggested container to build your search tree nodes.
 	@attributes
@@ -31,13 +63,15 @@ namespace SteerLib
 	public:
 		double f;
 		double g;
+		double rhs;
 		Util::Point point;
 		AStarPlannerNode* parent;
-		AStarPlannerNode(Util::Point _point, double _g, double _f, AStarPlannerNode* _parent)
+		AStarPlannerNode(Util::Point _point, double _g, double _f, double _rhs, AStarPlannerNode* _parent)
 		{
 			f = _f;
 			point = _point;
 			g = _g;
+			rhs = _rhs;
 			parent = _parent;
 		}
 		bool operator<(AStarPlannerNode other) const
@@ -54,8 +88,6 @@ namespace SteerLib
 		}
 
 	};
-
-
 
 	class STEERLIB_API AStarPlanner {
 	public:
@@ -101,8 +133,13 @@ namespace SteerLib
 		bool reconstruct_path(std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap);
 		int getCurrentNode(std::set<int> openset, std::map<int, AStarPlannerNode*> nodeMap);
 		void expand(int currentNode, int goalIndex, std::set<int>& openset, std::set<int> closedset, std::map<int, AStarPlannerNode*>& nodeMap);
-	};
 
+		//for dynamic AStar
+		bool dynamicComputePath(std::vector<Util::Point>& agent_path, Util::Point start, Util::Point goal, SteerLib::SpatialDataBaseInterface  * _gSpatialDatabase, bool append_to_path);
+		keyValue key(int currentnode, int start, std::map<int, AStarPlannerNode*>& nodeMap);
+		void updateState(int currentNode, int start, int goal, BinaryHeap &dopenset, std::set<int> &dclosedset, std::set<int>& dincons, std::map<int, AStarPlannerNode*>& nodeMap);
+		void computeorImprovePath(int startID, int goalID, BinaryHeap &dopenset, std::set<int> &dclosedset, std::set<int>& dincons, std::map<int, AStarPlannerNode*>& nodeMap);
+	};
 
 }
 
