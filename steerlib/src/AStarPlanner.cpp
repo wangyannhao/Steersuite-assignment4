@@ -103,25 +103,26 @@ namespace SteerLib
 		}
 		reconstruct_path(agent_path, currentNode, nodeMap);
 
-		while (_w > 1) {
-			//decrease w;
-			w = w*0.8;
+		//while (_w > 1) {
+		//	//decrease w;
+		//	w = w*0.8;
 
-			and(openSet, INCONS);
-			closedSet.empty();
-			ImprovePath();
+		//	and(openSet, INCONS);
+		//	closedSet.empty();
+		//	ImprovePath();
 
-			if (w < (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap)) {
-				_w = w;
-			}
-			else {
-				_w = (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap);
-			}
-			
+		//	if (w < (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap)) {
+		//		_w = w;
+		//	}
+		//	else {
+		//		_w = (*nodeMap[(goalID)]).g / min_2set(openSet, INCONS, nodeMap);
+		//	}
+		//	
 
-			reconstruct_path(agent_path, currentNode, nodeMap);
-		}
+		//	reconstruct_path(agent_path, currentNode, nodeMap);
+		//}
 		if (_w <= 1 && agent_path.size()!=0) {
+			std::cout << "hh" << std::endl;
 			return true;
 		}
 		//std::cout<<"\nIn A*";
@@ -145,16 +146,18 @@ namespace SteerLib
 
 	void AStarPlanner::ImprovePath() {
 		std::cout << "ImprovePath called" << std::endl;
-		std::cout << goalID << std::endl;
+		//std::cout << (*nodeMap[(goalID)]).g << std::endl;
 		while ((*nodeMap[(goalID)]).g > (*nodeMap[getCurrentNode(openSet, nodeMap)]).g) {
 			std::cout << "ImprovePath while called" << std::endl;
 			//Find node in openset with smallest f value
 			currentNode = getCurrentNode(openSet, nodeMap);
-			std::cout << currentNode << std::endl;
+			std::cout << (*nodeMap[currentNode]).g << std::endl;
 			//Add to closedset, remove from openset
 			closedSet.insert(currentNode);
 			openSet.erase(openSet.find(currentNode));
-
+			if (currentNode == goalID) {
+				std::cout << "goal found" << std::endl;
+			}
 			//Check if we reached the goal
 			//if (currentNode == goalID) {
 			//	return reconstruct_path(agent_path, currentNode, nodeMap);
