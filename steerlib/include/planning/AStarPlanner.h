@@ -13,7 +13,9 @@
 #include <set>
 #include <map>
 #include "SteerLib.h"
-
+#include <iostream>
+#include <vector>
+#include<list>
 namespace SteerLib
 {
 
@@ -29,16 +31,26 @@ namespace SteerLib
 	*/
 	class STEERLIB_API AStarPlannerNode {
 	public:
-		double f;
-		double g;
+		double f[3];
+		double g[3];
+		double h[3];
 		Util::Point point;
-		AStarPlannerNode* parent;
+		std::vector<AStarPlannerNode*> parent;
 		AStarPlannerNode(Util::Point _point, double _g, double _f, AStarPlannerNode* _parent)
 		{
-			f = _f;
+			for (int i = 0; i < 3; i++) {
+				f[i] = _f;
+				h[i] = _f;
+			}
+			for (int i = 0; i < 3; i++) {
+				g[i] = _g;
+			}
 			point = _point;
-			g = _g;
-			parent = _parent;
+			//std::cout << "called" << std::endl;
+			for (int i = 0; i < 3; i++) {
+				parent.push_back( _parent);
+			}
+			
 		}
 		bool operator<(AStarPlannerNode other) const
 		{
@@ -97,11 +109,15 @@ namespace SteerLib
 		bool computePath(std::vector<Util::Point>& agent_path, Util::Point start, Util::Point goal, SteerLib::SpatialDataBaseInterface* _gSpatialDatabase, bool append_to_path = false);
 	private:
 		SteerLib::SpatialDataBaseInterface * gSpatialDatabase;
-		double heuristic(int startIndex, int endIndex);
-		bool reconstruct_path(std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap);
-		int getCurrentNode(std::set<int> openset, std::map<int, AStarPlannerNode*> nodeMap);
-		void expand(int currentNode, int goalIndex, std::set<int>& openset, std::set<int> closedset, std::map<int, AStarPlannerNode*>& nodeMap);
+		std::vector<std::set<int> > OpenList;
+		std::vector<std::set<int> > ClosedList;
+
+		double heuristic(int startIndex, int endIndex,int method);
+		bool reconstruct_path(int method,std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap);
+		int getCurrentNode(int method,std::set<int> openset, std::map<int, AStarPlannerNode*> nodeMap);
+		void expand(int method,int currentNode, int goalIndex, std::set<int>& openset, std::set<int>& closedset, std::map<int, AStarPlannerNode*>& nodeMap);
 	};
+
 
 
 }

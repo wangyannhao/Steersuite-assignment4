@@ -73,8 +73,21 @@ namespace SteerLib
 
 	bool AStarPlanner::computePath(std::vector<Util::Point>& agent_path, Util::Point start, Util::Point goal, SteerLib::SpatialDataBaseInterface  * _gSpatialDatabase, bool append_to_path)
 	{
+		
 		gSpatialDatabase = _gSpatialDatabase;
+		std::set<int> openlist_astar;
+		std::set<int> openlist_wastar;
+		std::set<int> openlist_other;
+		std::set<int> closedlist_astar;
+		std::set<int> closedlist_wastar;
+		std::set<int> closedlist_other;
 
+		OpenList.push_back(openlist_astar);
+		OpenList.push_back(openlist_wastar);
+		OpenList.push_back(openlist_other);
+		ClosedList.push_back(closedlist_astar);
+		ClosedList.push_back(closedlist_wastar);
+		ClosedList.push_back(closedlist_other);
 		//Initialize f and g map scores
 		std::map<int, AStarPlannerNode*> nodeMap;
 		for (int i = 0; i < gSpatialDatabase->getNumCellsX(); ++i) {
@@ -83,82 +96,111 @@ namespace SteerLib
 				nodeMap[index] = new AStarPlannerNode(getPointFromGridIndex(index), (double)INFINITY, (double)INFINITY, nullptr);
 			}
 		}
+		
 		int startID = gSpatialDatabase->getCellIndexFromLocation(start);
 		int goalID = gSpatialDatabase->getCellIndexFromLocation(goal);
 		Util::Point startCenter = getPointFromGridIndex(startID);
 		Util::Point goalCenter = getPointFromGridIndex(goalID);
-		(*nodeMap[startID]).g = 0;
-		(*nodeMap[startID]).f = (*nodeMap[startID]).g + HEURISTIC_WEIGHT*heuristic(startID, goalID);
-
-		std::set<int> closedSet;
-		std::set<int> openSet;
-		openSet.insert(startID);
-
-		while (!openSet.empty()) {
-			//Find node in openset with smallest f value
-			int currentNode = getCurrentNode(openSet, nodeMap);
-
-			//Add to closedset, remove from openset
-			closedSet.insert(currentNode);
-			openSet.erase(openSet.find(currentNode));
-
-			//Check if we reached the goal
-			if (currentNode == goalID) {
-				return reconstruct_path(agent_path, currentNode, nodeMap);
-			}
-
-			//Search through neighbors, calculate g,f scores, add to openset
-			expand(currentNode, goalID, openSet, closedSet, nodeMap);
+		for (int i = 0; i < 3; i++) {
+			(*nodeMap[startID]).g[i] = 0;
+			(*nodeMap[startID]).h[i] = heuristic(startID, goalID, i);
+			(*nodeMap[startID]).f[i] = (*nodeMap[startID]).g[i] + (*nodeMap[startID]).h[i];
+			OpenList.at(i).insert(startID);
 		}
+		
+		while (OpenList.at(0).size() > 0) {
+			
+			for (int i = 1; i < 3; i++) {
+				int tmpi = getCurrentNode(i, OpenList.at(i), nodeMap);
+				int tmp0 = getCurrentNode(0, OpenList.at(0), nodeMap);
+				
+				if ((*nodeMap[tmpi]).g[i] <= (*nodeMap[tmp0]).g[0]) {
+					
+					if (tmpi == goalID) {
+						std::cout << tmpi << std::endl;
+						return reconstruct_path(i, agent_path, tmpi, nodeMap);
+					}
+					else {
+						int currentNode = tmpi;
+						std::cout << "1: "<<currentNode << std::endl;
+						ClosedList.at(i).insert(currentNode);
+						OpenList.at(i).erase(OpenList.at(i).find(currentNode));
+						expand(i, currentNode, goalID, OpenList.at(i), ClosedList.at(i), nodeMap);
+						
+					}
+				}
+				else {
+					
+					if (tmp0 == goalID) {
+						std::cout << tmp0 << std::endl;
+						return reconstruct_path(0, agent_path, tmp0, nodeMap);
+					}
+					else {
+						int currentNode = tmp0;
+						std::cout << "2: " << currentNode << std::endl;
+						ClosedList.at(0).insert(currentNode);
+						OpenList.at(0).erase(OpenList.at(0).find(currentNode));
+						expand(0, currentNode, goalID, OpenList.at(0), ClosedList.at(0), nodeMap);
+						
+					}
+				}
 
-
-		//std::cout<<"\nIn A*";
+			}
+			
+		}
 
 		return false;
 	}
 
-	double AStarPlanner::heuristic(int startIndex, int endIndex) {
-		//If method is true, use Euclidean, else use Manhattan
-		bool method = true;
+	double AStarPlanner::heuristic(int startIndex, int endIndex, int method) {
 		unsigned int startx, startz, endx, endz;
 		gSpatialDatabase->getGridCoordinatesFromIndex(startIndex, startx, startz);
 		gSpatialDatabase->getGridCoordinatesFromIndex(endIndex, endx, endz);
-		if (method) {
+		if (method == 0) {
+			//use Euclidean
+
 			return ((double)sqrt((startx - endx)*(startx - endx) + (startz - endz)*(startz - endz)));
+
+		}//use wieghted Euclidean
+		else if (method == 1) {
+			return 2 * ((double)sqrt((startx - endx)*(startx - endx) + (startz - endz)*(startz - endz)));
 		}
-		else {
-			return ((abs((double)startx - endx) + abs((double)startz - endz)));
+		else if (method == 2) {
+			// use weighted Manhattahn
+			return  2 * ((abs((double)startx - endx) + abs((double)startz - endz)));
 		}
+
 	}
 
-	bool AStarPlanner::reconstruct_path(std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap) {
+	bool AStarPlanner::reconstruct_path(int method, std::vector<Util::Point>& agent_path, int currentNode, std::map<int, AStarPlannerNode*> nodeMap) {
+		std::cout << "reconstructing path" << std::endl;
 		AStarPlannerNode* temp = nodeMap[currentNode];
-		while ((*temp).parent) {
-			temp = (*temp).parent;
+		while ((*temp).parent.at(method)) {
+			temp = (*temp).parent.at(method);
 			agent_path.insert(agent_path.begin(), (*temp).point);
 		}
 		//std::cout<<"\nPath length: "<<reverse.size()<<'\n';
 		return true;
 	}
 
-	int AStarPlanner::getCurrentNode(std::set<int> openset, std::map<int, AStarPlannerNode*> nodeMap) {
+	int AStarPlanner::getCurrentNode(int method, std::set<int> openset, std::map<int, AStarPlannerNode*> nodeMap) {
 		std::set<int>::iterator it;
 		double temp = INFINITY;
 		//If bigger is true, larger g scores have precedence, else smaller scores have precedence
 		bool bigger = true;
 		for (std::set<int>::iterator i = openset.begin(); i != openset.end(); ++i) {
-			if ((*nodeMap[(*i)]).f < temp) {
-				temp = (*nodeMap[(*i)]).f;
+			if ((*nodeMap[(*i)]).f[method] < temp) {
+				temp = (*nodeMap[(*i)]).f[method];
 				it = i;
 			}
-			else if ((*nodeMap[(*i)]).f == temp) {
+			else if ((*nodeMap[(*i)]).f[method] == temp) {
 				if (bigger) {
-					if ((*nodeMap[(*it)]).g < (*nodeMap[(*i)]).g) {
+					if ((*nodeMap[(*it)]).g[method] < (*nodeMap[(*i)]).g[method]) {
 						it = i;
 					}
 				}
 				else {
-					if ((*nodeMap[(*it)]).g >(*nodeMap[(*i)]).g) {
+					if ((*nodeMap[(*it)]).g[method] > (*nodeMap[(*i)]).g[method]) {
 						it = i;
 					}
 				}
@@ -167,28 +209,30 @@ namespace SteerLib
 		return (*it);
 	}
 
-	void AStarPlanner::expand(int currentNode, int goalIndex, std::set<int>& openset, std::set<int> closedset, std::map<int, AStarPlannerNode*>& nodeMap) {
+	void AStarPlanner::expand(int method, int currentNode, int goalIndex, std::set<int>& openset, std::set<int>& closedset, std::map<int, AStarPlannerNode*>& nodeMap) {
+		//std::cout << "expand" << std::endl;
 		unsigned int x, z;
 		gSpatialDatabase->getGridCoordinatesFromIndex(currentNode, x, z);
-		for (int i = MAX(x - 1, 0); i<MIN(x + 2, gSpatialDatabase->getNumCellsX()); i += GRID_STEP) {
-			for (int j = MAX(z - 1, 0); j<MIN(z + 2, gSpatialDatabase->getNumCellsZ()); j += GRID_STEP) {
+		
+		for (int i = MAX(x - 1, 0); i < MIN(x + 2, gSpatialDatabase->getNumCellsX()); i += GRID_STEP) {
+			for (int j = MAX(z - 1, 0); j < MIN(z + 2, gSpatialDatabase->getNumCellsZ()); j += GRID_STEP) {
 				int neighbor = gSpatialDatabase->getCellIndexFromGridCoords(i, j);
 				if (canBeTraversed(neighbor) && closedset.count(neighbor) == 0) {
 					double tempg;
 					if ((i == x) || (j == z)) {
-						tempg = (*nodeMap[currentNode]).g + (DIAGONAL_COST*gSpatialDatabase->getTraversalCost(neighbor));
+						tempg = (*nodeMap[currentNode]).g[method] + (DIAGONAL_COST*gSpatialDatabase->getTraversalCost(neighbor));
 					}
 					else {
-						tempg = (*nodeMap[currentNode]).g + gSpatialDatabase->getTraversalCost(neighbor);
+						tempg = (*nodeMap[currentNode]).g[method] + gSpatialDatabase->getTraversalCost(neighbor);
 					}
-					if (tempg < (*nodeMap[neighbor]).g) {
-						(*nodeMap[neighbor]).g = tempg;
-						(*nodeMap[neighbor]).f = (*nodeMap[neighbor]).g + HEURISTIC_WEIGHT*heuristic(neighbor, goalIndex);
+					if (tempg < (*nodeMap[neighbor]).g[method]) {
+						(*nodeMap[neighbor]).g[method] = tempg;
+						(*nodeMap[neighbor]).f[method] = (*nodeMap[neighbor]).g[method] + heuristic(neighbor, goalIndex, method);
 						if (openset.count(neighbor) == 1) {
 							openset.erase(openset.find(neighbor));
 						}
 						openset.insert(neighbor);
-						(*nodeMap[neighbor]).parent = nodeMap[currentNode];
+						(*nodeMap[neighbor]).parent.at(method) = nodeMap[currentNode];
 					}
 				}
 			}
